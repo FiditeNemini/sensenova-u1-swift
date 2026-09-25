@@ -141,6 +141,48 @@ Oracle fixtures and capture harnesses live in the companion `sensenova-u1-oracle
 
 **Known workaround:** mlx-swift ≤ 0.31.6 JIT builds mis-instantiate the NAX split-K bf16 GEMM ([mlx#3797](https://github.com/ml-explore/mlx/issues/3797)); the FFN down-projection is row-chunked ≤896 rows on the bf16 path (exact; quantized tiers are unaffected). Removed automatically once a fixed mlx-swift release lands.
 
+## GPU numerics: the pixel head's convs (2026-09-24)
+
+mlx's Metal `conv2d` takes a Winograd F(6×6,3×3) path when the conv is 3×3, stride 1, dilation 1,
+groups 1, C % 32 == 0, O % 32 == 0, C + O ≥ 256 and N·H·W ≥ 4096. On M5 that path is lossy, and
+badly so in bf16: about 5.8e-2 relL2 per conv, 35× the bf16 rounding floor.
+
+Both `fm_head` (ConvDecoder) convs fall inside it at production sizes, in bf16:
+
+- conv1: 1024→1024 at 2× the token grid (64² for a 1024² image)
+- conv2: 256→192 at 4× the token grid (128²)
+
+They run on every velocity prediction, twice per step with CFG. The component fixture uses a 4×6
+token grid, which sits below the window, and the GPU e2e parity runs at 256², so neither could see
+this.
+
+Both convs are now `WinogradFreeConv2d`. **Default `.conv3d`** (`fmHead.convRoute`, type
+`SenseNovaConvRoute`).
+
+Head only, at the 1024² token grid in bf16, against fp32 on the same inputs and weights:
+
+| Route | relL2 | max error | Time per call |
+|---|---|---|---|
+| `.winograd` (old default) | 7.5e-2 | 6.3 | 4.0 ms |
+| `.fp32Winograd` | 8.6e-3 | 0.70 | 5.9 ms |
+| `.conv3d` | 4.1e-3 | 0.17 | 7.0 ms |
+
+End to end at 1024², 20 steps, seed 42, with the oracle's T2I prompt, comparing `.winograd` against
+`.conv3d`:
+
+- The images differ at 39.3 dB (8-bit). 73% of pixels change, 17.5% by more than 4 levels, and
+  the largest difference is 117 levels.
+- The difference map is blocky, following the head's tiling.
+- At 3× the raw render shows chroma speckle on fine texture (fur, the nose bridge) that the routed
+  render does not have.
+- Time is 21.4 s vs 20.6 s: no measurable cost.
+
+Controls and tests:
+
+- Environment override: `SENSENOVA_CONV_ROUTE=winograd|conv3d|fp32Winograd`.
+- `SENSENOVA_PARITY=1 swift test -c release -Xswiftc -enable-testing --filter FMHeadGPULaneTests`
+  compares the head against fp32.
+
 ## License & provenance
 
 - Port code: **MIT** (this repository)

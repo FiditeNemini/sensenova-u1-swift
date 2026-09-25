@@ -60,13 +60,20 @@ public final class ConvDecoder: Module {
     @ModuleInfo(key: "conv2") var conv2: Conv2d
 
     public init(inputDim: Int = 4096, hiddenDim: Int = 1024) {
-        self._conv1.wrappedValue = Conv2d(
+        self._conv1.wrappedValue = WinogradFreeConv2d(
             inputChannels: inputDim / 4, outputChannels: hiddenDim,
             kernelSize: 3, padding: 1)
-        self._conv2.wrappedValue = Conv2d(
+        self._conv2.wrappedValue = WinogradFreeConv2d(
             inputChannels: hiddenDim / 4, outputChannels: 192,
             kernelSize: 3, padding: 1)
         super.init()
+        if let route = SenseNovaConvRoute.environmentOverride { convRoute = route }
+    }
+
+    /// Route for the two in-window convs (WinogradFreeConv2d.swift) — see the README numbers.
+    public var convRoute: SenseNovaConvRoute {
+        get { modules().lazy.compactMap { ($0 as? WinogradFreeConv2d)?.route }.first ?? .conv3d }
+        set { for case let conv as WinogradFreeConv2d in modules() { conv.route = newValue } }
     }
 
     /// x: (B, tokenH, tokenW, 4096) NHWC → (B, 32·tokenH, 32·tokenW, 3) NHWC
