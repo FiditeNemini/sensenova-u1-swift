@@ -230,31 +230,11 @@ public final class MoTMLP: Module {
         super.init()
     }
 
+    /// No row-chunk: the NAX split-K GEMM bug (mlx#3797) this FFN's down-projection used to
+    /// dodge (K = 12288, in-window for 1024–4096 tokens) is fixed in mlx-swift 0.32.2, which
+    /// is now the manifest floor. `NAXProbeTests` guards the fix at this exact shape.
     public func callAsFunction(_ x: MLXArray) -> MLXArray {
-        Self.downProjected(downProj, silu(gateProj(x)) * upProj(x))
-    }
-
-    /// mlx-swift ≤ 0.31.6 (JIT builds) mis-instantiates the NAX split-K GEMM
-    /// (mlx#3797, fixed by #3810): any HALF-PRECISION matmul with
-    /// M·N ≥ 2048², K ≥ 10240, K ≥ 3·max(M,N) returns garbage/NaN on M5-class
-    /// GPUs. In this model that is exactly the FFN down-projection (K = 12288)
-    /// once the image-token sequence passes ~896 rows — 1024² denoise = 1024
-    /// tokens → 100% NaN output. Row-chunking at ≤896 rows is exact (same
-    /// reduction, different tiling). Remove when an mlx-swift release vendors
-    /// the fix (0.31.6 is still the latest as of 2026-08-23; re-probe on bump —
-    /// same playbook as boogu-image-swift's LuminaFeedForward.downProjected).
-    static func downProjected(_ proj: Linear, _ h: MLXArray) -> MLXArray {
-        let s = h.dim(-2)
-        let halfPrecision = h.dtype == .bfloat16 || h.dtype == .float16
-        guard halfPrecision, s > 896, h.dim(-1) >= 10240 else { return proj(h) }
-        var outs: [MLXArray] = []
-        var i = 0
-        while i < s {
-            let j = min(i + 896, s)
-            outs.append(proj(h[0..., i ..< j, 0...]))
-            i = j
-        }
-        return concatenated(outs, axis: -2)
+        downProj(silu(gateProj(x)) * upProj(x))
     }
 }
 

@@ -23,7 +23,10 @@ let package = Package(
         .executable(name: "sensenova-cli", targets: ["sensenova-cli"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/ml-explore/mlx-swift.git", from: "0.30.0"),
+        // Floor 0.32.2: first mlx-swift carrying the NAX split-K GEMM fix (mlx#3810). The FFN
+        // row-chunk workaround was removed on that basis — resolving anything older would
+        // silently NaN 1024–4096-token denoises. Guarded by NAXProbeTests.
+        .package(url: "https://github.com/ml-explore/mlx-swift.git", from: "0.32.2"),
         .package(url: "https://github.com/huggingface/swift-transformers", from: "1.1.6"),
         // MLXEngine contract (MLXToolKit) + conformance kits. ≥0.32.0 for
         // engine-executed materialization (contract 1.24) and the CAN gate.
