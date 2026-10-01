@@ -139,7 +139,7 @@ The port is gated against the reference PyTorch implementation ([OpenSenseNova/S
 
 Oracle fixtures and capture harnesses live in the companion `sensenova-u1-oracle` workspace (spec: `PORTING-SPEC.md`, including a 21-item trap ledger — dual RoPE conventions, the `[::2]` frequency-range trick, fp32 gen-stream activations to 4.3e5, and more).
 
-**Known workaround:** mlx-swift ≤ 0.31.6 JIT builds mis-instantiate the NAX split-K bf16 GEMM ([mlx#3797](https://github.com/ml-explore/mlx/issues/3797)); the FFN down-projection is row-chunked ≤896 rows on the bf16 path (exact; quantized tiers are unaffected). Removed automatically once a fixed mlx-swift release lands.
+**NAX split-K GEMM (fixed):** mlx-swift ≤ 0.31.6 JIT builds mis-instantiate the NAX split-K bf16 GEMM ([mlx#3797](https://github.com/ml-explore/mlx/issues/3797)), which used to force a ≤896-row chunk on the FFN down-projection. mlx-swift 0.32.3 (the manifest floor) carries the fix, the chunk is gone, and `NAXProbeTests` guards the shape on every test pass.
 
 ## GPU numerics: the pixel head's convs (2026-09-24)
 

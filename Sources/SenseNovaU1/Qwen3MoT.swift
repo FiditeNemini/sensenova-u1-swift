@@ -231,8 +231,8 @@ public final class MoTMLP: Module {
     }
 
     /// No row-chunk: the NAX split-K GEMM bug (mlx#3797) this FFN's down-projection used to
-    /// dodge (K = 12288, in-window for 1024–4096 tokens) is fixed in mlx-swift 0.32.2, which
-    /// is now the manifest floor. `NAXProbeTests` guards the fix at this exact shape.
+    /// dodge (K = 12288, in-window for 1024–4096 tokens) is fixed in mlx-swift 0.32.2+; 0.32.3
+    /// is the manifest floor. `NAXProbeTests` guards the fix at this exact shape.
     public func callAsFunction(_ x: MLXArray) -> MLXArray {
         downProj(silu(gateProj(x)) * upProj(x))
     }

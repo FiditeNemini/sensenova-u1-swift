@@ -1,5 +1,5 @@
 {
-  "originHash" : "241d2f8cbd3cec12deb360790916cf4ac70bd6b990b608d38b7020545e376e48",
+  "originHash" : "afb289435374b12f270663907cb63decf3b33957464caeb415e21da61fe794b0",
   "pins" : [
     {
       "identity" : "designscaffold",
@@ -29,12 +29,21 @@
       }
     },
     {
+      "identity" : "mlx-exact-conv-swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/xocialize/mlx-exact-conv-swift",
+      "state" : {
+        "revision" : "26096a792c0c32eda48eb97bc4dadd56dc5c7cc0",
+        "version" : "0.1.0"
+      }
+    },
+    {
       "identity" : "mlx-swift",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/ml-explore/mlx-swift.git",
       "state" : {
-        "revision" : "2b5e8775270c2047f51f05cb3d87cdeea9a125e3",
-        "version" : "0.32.2"
+        "revision" : "19601207e9a0de51e03ee6ec0c3c5f3784275075",
+        "version" : "0.32.3"
       }
     },
     {

@@ -1,5 +1,5 @@
 // NAXProbeTests.swift — regression guard for the NAX split-K GEMM bug (mlx#3797, fixed
-// upstream by #3810, first shipped to Swift in mlx-swift 0.32.2).
+// upstream by #3810, first shipped to Swift in mlx-swift 0.32.2; floor 0.32.3).
 //
 // On mlx-swift ≤0.31.6 with MLX_METAL_JIT=ON, a half-precision matmul in the window
 //   M·N ≥ 2048² , K ≥ 10240 , K ≥ 3·max(M,N)
@@ -9,7 +9,7 @@
 // = 12288, N = hiddenSize = 4096, so 1024 ≤ M ≤ 4096 tokens qualify — a 1024² denoise
 // (1024 tokens) produced 100% NaN. `MoTMLP` used to row-chunk at ≤896 to dodge it; the
 // chunk was removed once this probe passed edge-to-edge on 0.32.2 and the manifest floor
-// was raised to 0.32.2 so no consumer can resolve back into the broken range.
+// was raised (now 0.32.3) so no consumer can resolve back into the broken range.
 //
 // Weights-free (seeded LCG), runs on every test pass. If this ever fails, the fix has
 // regressed: restore the row-chunk in `MoTMLP.callAsFunction` before shipping.
