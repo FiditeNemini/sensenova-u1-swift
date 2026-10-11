@@ -1,6 +1,5 @@
 // MLXEngine package over the SenseNovaU1 core — one resident unified model
-// serving `textToImage` AND `imageEdit` (VQA/imageAnalysis is a queued
-// follow-up surface on the same core).
+// serving `textToImage`, `imageEdit` AND `imageAnalysis` (VQA) on every tier.
 //
 // SenseNova-U1.5-8B-MoT (Apache-2.0): NEO-unify Mixture-of-Transformers,
 // pixel-space rectified flow, no VAE. The Swift core is parity-locked against
@@ -66,8 +65,7 @@ public enum SenseNovaVariant: String, Codable, Sendable, CaseIterable {
     }
 
     /// Pose tiers are a **base-checkpoint merge, not a distill** — the sampler
-    /// contract is unchanged, so editing, think mode and VQA all stay enabled
-    /// (the `distilledTierCannot…` guards deliberately do not fire here).
+    /// contract is unchanged (50-step-class, cfg 4), and think mode stays enabled.
     public var isPoseTuned: Bool { self == .pose8 || self == .poseBf16 }
 
     /// 28 steps on the pose tiers is the A/B's setting, not a guess: the
@@ -79,6 +77,17 @@ public enum SenseNovaVariant: String, Codable, Sendable, CaseIterable {
     }
 
     public var defaultGuidance: Float { isDistilled ? 1.0 : 4.0 }
+
+    /// The surfaces this tier serves — all three, on every tier. The 8-step
+    /// distill adapters touch only the 294 gen-stream (`*_mot_gen`) projections:
+    /// against the base artifact at the same quant exactly 882 tensors differ
+    /// and the understanding stream is bit-identical, so VQA answers match the
+    /// base tier token for token; and the distilled edit at 8 steps / cfg 1
+    /// matches the 50-step cfg-4 base edit (28.7 dB) in a tenth of the time
+    /// (AB-R-0490). The gates that refused edit and VQA on distill tiers
+    /// (2026-08 → 2026-10-11) were never evidence-based. Think mode remains the
+    /// one base-tier-only feature (`distilledTierCannotThink`).
+    public var capabilities: Set<Capability> { [.textToImage, .imageEdit, .imageAnalysis] }
 
     /// C6 model-level ranking metadata. Only the pose tiers advertise
     /// `.poseDriven` — the base tiers read a skeleton as something to paste,
@@ -175,10 +184,12 @@ public enum SenseNovaU1PackageError: Error, LocalizedError {
     case unreadableSnapshot(String)
     case imageDecode
     case pngEncode
+    @available(*, deprecated, message: "no longer thrown: distill tiers serve imageEdit (AB-R-0490)")
     case distilledTierCannotEdit
     case distilledTierCannotThink
     case negativePromptUnsupportedOnEdit
     case sizeNotTokenAligned(width: Int, height: Int, multiple: Int)
+    @available(*, deprecated, message: "no longer thrown: distill tiers serve imageAnalysis (AB-R-0490)")
     case distilledTierCannotAnalyze
     case metaDataOutOfRange(key: String, value: Double, range: ClosedRange<Double>)
 
@@ -188,7 +199,7 @@ public enum SenseNovaU1PackageError: Error, LocalizedError {
         case .imageDecode: return "Could not decode an input image."
         case .pngEncode: return "PNG encoding failed."
         case .distilledTierCannotEdit:
-            return "The 8step distill tiers are T2I-only; use the bf16 or 8bit variant for imageEdit."
+            return "No longer thrown: the 8step distill tiers serve imageEdit (AB-R-0490)."
         case .distilledTierCannotThink:
             return "Think mode needs the base tiers; use the bf16 or 8bit variant."
         case .negativePromptUnsupportedOnEdit:
@@ -197,7 +208,7 @@ public enum SenseNovaU1PackageError: Error, LocalizedError {
         case .sizeNotTokenAligned(let w, let h, let m):
             return "width/height must be multiples of \(m) (got \(w)x\(h))."
         case .distilledTierCannotAnalyze:
-            return "VQA needs the understanding stream of a base tier; use bf16 or 8bit."
+            return "No longer thrown: the 8step distill tiers serve imageAnalysis (AB-R-0490)."
         case .metaDataOutOfRange(let key, let value, let range):
             return "metaData \(key) = \(value) is outside \(range.lowerBound)...\(range.upperBound)."
         }
@@ -250,8 +261,12 @@ public final class SenseNovaU1Package: ModelPackage {
                 //
                 // Activations are LEFT AS DECLARED. Measured T2I peaks at the
                 // 2048² envelope are 2.93 / 3.35 / 2.52 GB, comfortably inside
-                // 4.0 / 4.2 / 4.5 — but editing adds vision-token activation and
-                // has NOT been measured, so the headroom stays until it is.
+                // 4.0 / 4.2 / 4.5. Editing (2026-10-11, headless CLI, 768² → 2048²
+                // single-reference edit, 8 steps, cfg 1, 8step-v2 tiers): peak
+                // 22.9 GB int8 / 15.2 GB int4 — 3.97 GB over the post-load
+                // active set on both, i.e. the vision-token activation lands
+                // inside the declared 4.2 / 4.5 GB and the peak equals the load
+                // peak. bf16 edit is unmeasured; it runs on the same headroom.
                 footprints: [
                     QuantFootprint(
                         quant: .bf16, residentBytes: 35_500_000_000,
@@ -282,10 +297,11 @@ public final class SenseNovaU1Package: ModelPackage {
                 IEditContract.descriptor(
                     name: "sensenova-u1-edit",
                     summary: "Identity-preserving instruction editing on the same "
-                        + "resident model (image-conditioned generation, cfg 4; "
-                        + "metaData imageGuidance (1...4) adds the image-CFG axis; "
-                        + "base bf16/8bit and pose tiers). N reference images are "
-                        + "conditioned on in the order given.",
+                        + "resident model (image-conditioned generation; 50 steps / "
+                        + "cfg 4 on the base and pose tiers, 8 steps cfg-free on the "
+                        + "8step distill tiers; metaData imageGuidance (1...4) adds "
+                        + "the image-CFG axis). N reference images are conditioned "
+                        + "on in the order given.",
                     modes: []
                 ),
                 ImageAnalysisContract.descriptor(
@@ -293,7 +309,8 @@ public final class SenseNovaU1Package: ModelPackage {
                     summary: "Visual question answering on the SAME resident model "
                         + "(understanding stream): grounded description, reading, and "
                         + "reasoning about an image. metaData: maxTokens, temperature. "
-                        + "Base bf16/8bit tiers.",
+                        + "Every tier (the distill adapters leave the understanding "
+                        + "stream untouched).",
                     modes: []
                 ),
             ]
@@ -370,6 +387,9 @@ public final class SenseNovaU1Package: ModelPackage {
         try Task.checkCancellation()
         guard let model, let tokenizer else { throw PackageError.notLoaded }
 
+        guard configuration.variant.capabilities.contains(request.capability) else {
+            throw PackageError.unsupportedCapability(request.capability)
+        }
         switch request.capability {
         case .textToImage:
             guard let t2i = request as? T2IRequest else {
@@ -380,16 +400,10 @@ public final class SenseNovaU1Package: ModelPackage {
             guard let analysis = request as? ImageAnalysisRequest else {
                 throw PackageError.unsupportedCapability(request.capability)
             }
-            guard !configuration.variant.isDistilled else {
-                throw SenseNovaU1PackageError.distilledTierCannotAnalyze
-            }
             return try await runAnalysis(analysis, model: model, tokenizer: tokenizer)
         case .imageEdit:
             guard let edit = request as? IEditRequest else {
                 throw PackageError.unsupportedCapability(request.capability)
-            }
-            guard !configuration.variant.isDistilled else {
-                throw SenseNovaU1PackageError.distilledTierCannotEdit
             }
             return try await runEdit(edit, model: model, tokenizer: tokenizer)
         default:
@@ -413,8 +427,8 @@ public final class SenseNovaU1Package: ModelPackage {
     ) async throws -> T2IResponse {
         let variant = configuration.variant
         var params = T2IParams()
-        params.numSteps = request.steps ?? variant.defaultSteps
-        params.cfgScale = request.guidanceScale.map(Float.init) ?? variant.defaultGuidance
+        params.numSteps = request.steps ?? configuration.variant.defaultSteps
+        params.cfgScale = request.guidanceScale.map(Float.init) ?? configuration.variant.defaultGuidance
         params.seed = request.seed ?? 0
         let width = request.width ?? 1024
         let height = request.height ?? 1024
@@ -500,8 +514,11 @@ public final class SenseNovaU1Package: ModelPackage {
         }
 
         var params = T2IParams()
-        params.numSteps = request.steps ?? 50
-        params.cfgScale = request.guidanceScale.map(Float.init) ?? 4.0
+        // Tier defaults, as T2I: 8 steps / cfg 1 on the distill tiers (the
+        // vendor's 8-step edit recipe), 28 on pose (its A/B setting), 50 / cfg 4
+        // on the base tiers.
+        params.numSteps = request.steps ?? configuration.variant.defaultSteps
+        params.cfgScale = request.guidanceScale.map(Float.init) ?? configuration.variant.defaultGuidance
         params.seed = request.seed ?? 0
 
         // The image-CFG axis (the reference's `img_cfg_scale`, the Space's

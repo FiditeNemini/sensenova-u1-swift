@@ -34,6 +34,25 @@ final class ConformanceTests: XCTestCase {
         XCTAssertEqual(caps, [.textToImage, .imageEdit, .imageAnalysis])
     }
 
+    /// Every tier serves every declared surface — including the 8-step distill
+    /// tiers, whose edit and VQA refusals were lifted on evidence (AB-R-0490):
+    /// the adapter touches only gen-stream projections, VQA is token-identical
+    /// to the base tier, and the 8-step edit matches the 50-step base edit.
+    /// `run()` consults the same declaration, so this pins the policy.
+    func testEveryTierServesEverySurface() {
+        let declared = Set(SenseNovaU1Package.manifest.surfaces.map(\.capability))
+        XCTAssertEqual(declared, [.textToImage, .imageEdit, .imageAnalysis])
+        for variant in SenseNovaVariant.allCases {
+            XCTAssertEqual(variant.capabilities, declared, "\(variant) must serve every surface")
+        }
+        for variant in SenseNovaVariant.allCases where variant.isDistilled {
+            XCTAssertTrue(variant.capabilities.contains(.imageEdit), "\(variant) edit")
+            XCTAssertTrue(variant.capabilities.contains(.imageAnalysis), "\(variant) VQA")
+            XCTAssertEqual(variant.defaultSteps, 8)
+            XCTAssertEqual(variant.defaultGuidance, 1.0)
+        }
+    }
+
     /// The split-provenance rule: fetch address = OUR namespace, origin = theirs,
     /// and the trailing model name survives the mirror.
     func testProvenanceSplit() {

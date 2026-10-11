@@ -23,6 +23,77 @@ final class LiveSurfaceTests: XCTestCase {
             configuration: .init(variant: .q8, snapshotPath: snapshot.path))
     }
 
+    /// The 8-step V2 distill tier, int8 — the tier whose edit and VQA gates
+    /// were lifted on evidence (AB-R-0490).
+    func distillPackage() -> SenseNovaU1Package {
+        let snapshot = LivePackageTests.artifactsRoot
+            .appendingPathComponent("SenseNova-U1.5-8B-MoT-8step-v2-8bit")
+        return SenseNovaU1Package(
+            configuration: .init(variant: .fast8V2, snapshotPath: snapshot.path))
+    }
+
+    func oracleRender() throws -> Image {
+        let inputURL = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent("sensenova-u1-oracle/renders/sn_1024_s20.png")
+        return Image(format: .png, data: try Data(contentsOf: inputURL), width: 1024, height: 1024)
+    }
+
+    /// Distill tiers serve imageEdit: with no steps/guidance given the run
+    /// takes the tier's defaults (8 steps, cfg 1 — the vendor's 8-step edit
+    /// recipe) and returns a decodable PNG at the requested size.
+    func testDistillTierEditsAtTierDefaults() async throws {
+        try requireLive()
+        let package = distillPackage()
+        try await package.load()
+        let response: any CapabilityResponse
+        do {
+            response = try await package.run(
+                IEditRequest(
+                    images: [try oracleRender()],
+                    prompt: "Make the chair emerald green velvet. Preserve everything else.",
+                    width: 512, height: 512, seed: 42))
+        } catch {
+            await package.unload()
+            throw error
+        }
+        await package.unload()
+        guard let edit = response as? IEditResponse else { return XCTFail("wrong response type") }
+        XCTAssertGreaterThan(edit.image.data.count, 10_000)
+        let size = LivePackageTests().decodePNGSize(edit.image.data)
+        XCTAssertEqual(size?.0, 512)
+        XCTAssertEqual(size?.1, 512)
+        try? edit.image.data.write(
+            to: LivePackageTests.artifactsRoot.appendingPathComponent("live_edit_distill_smoke.png"))
+        print("  [live] edit fast8V2 (tier defaults): \(edit.image.data.count) bytes PNG @ \(size!)")
+    }
+
+    /// Distill tiers serve VQA, and the understanding stream is the base
+    /// tier's: the answer must be grounded exactly as the base tier's is.
+    func testDistillTierAnswersVQA() async throws {
+        try requireLive()
+        let package = distillPackage()
+        try await package.load()
+        let text: String
+        do {
+            let response = try await package.run(
+                ImageAnalysisRequest(
+                    image: try oracleRender(),
+                    prompt: "What animal is shown, and what colour is the chair? Answer briefly.",
+                    metaData: ["maxTokens": .int(80)]))
+            text = (response as! ImageAnalysisResponse).text
+        } catch {
+            await package.unload()
+            throw error
+        }
+        await package.unload()
+        let lower = text.lowercased()
+        XCTAssertTrue(lower.contains("cat"), "answer not grounded in the image: \(text)")
+        XCTAssertTrue(lower.contains("red"), "answer missed the chair colour: \(text)")
+        print("  [live] vqa fast8V2: \(text.prefix(160))")
+    }
+
     /// P1: a consumer bound to the engine's RunMonitor must see monotonic
     /// denoise steps — without this the demo shows a dead spinner for minutes.
     func testDenoiseProgressIsReported() async throws {
