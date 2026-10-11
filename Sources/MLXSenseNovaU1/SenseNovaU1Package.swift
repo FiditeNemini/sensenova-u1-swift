@@ -29,6 +29,14 @@ public enum SenseNovaVariant: String, Codable, Sendable, CaseIterable {
     case fast8 = "8step-8bit"
     case fast4 = "8step-4bit"
 
+    /// **8-step distill, V2 adapter** (upstream `SenseNova-U1.5-8B-MoT-LoRA-8step-V2`,
+    /// 2026-09-24, upstream's recommended 8-step LoRA: better colour balance,
+    /// more natural contrast, less oversharpening than V1). Same 882-tensor
+    /// adapter layout as V1, merged through the same path; separate repos so the
+    /// V1 tiers keep reproducing their published renders at fixed seed (AB-T-0228).
+    case fast8V2 = "8step-v2-8bit"
+    case fast4V2 = "8step-v2-4bit"
+
     /// **Pose specialty, bf16.** The RefControl pose adapter (v1 @3000, rank 32
     /// / alpha 32, 294 `*_mot_gen` gen-stream projections) merged into the base
     /// checkpoint at fp32 and cast — the same merge the base tiers get for the
@@ -47,13 +55,15 @@ public enum SenseNovaVariant: String, Codable, Sendable, CaseIterable {
     public var quant: Quant {
         switch self {
         case .bf16, .poseBf16: return .bf16
-        case .q8, .fast8, .pose8: return .int8
-        case .fast4: return .int4
+        case .q8, .fast8, .fast8V2, .pose8: return .int8
+        case .fast4, .fast4V2: return .int4
         }
     }
 
     /// LoRA-merged distill tiers run cfg-free at 8 steps (the vendor contract).
-    public var isDistilled: Bool { self == .fast8 || self == .fast4 }
+    public var isDistilled: Bool {
+        self == .fast8 || self == .fast4 || self == .fast8V2 || self == .fast4V2
+    }
 
     /// Pose tiers are a **base-checkpoint merge, not a distill** — the sampler
     /// contract is unchanged, so editing, think mode and VQA all stay enabled
