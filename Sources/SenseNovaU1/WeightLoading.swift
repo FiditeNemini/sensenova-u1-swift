@@ -201,7 +201,9 @@ public enum WeightLoading {
 
     /// Load an offline artifact: no sanitize, structural quantize when the
     /// config carries a `quantization` block, then a verified update.
-    /// Peak ≈ resident (no bf16-materialize-then-quantize transient).
+    /// Peak ≈ resident: no bf16-materialize-then-quantize transient, and the
+    /// random-init model is never evaluated (the shards load lazily and the
+    /// single `eval(model)` materializes only the artifact's tensors).
     public static func loadArtifact(from directory: URL) throws -> NEOChatModel {
         let config = try NEOChatConfig.load(from: directory)
         let model = NEOChatModel(config)
@@ -212,7 +214,8 @@ public enum WeightLoading {
            let bits = (q["bits"] as? NSNumber)?.intValue
         {
             let group = (q["group_size"] as? NSNumber)?.intValue ?? 64
-            quantizeStreams(model, bits: bits, groupSize: group)
+            // Structure only: the artifact supplies every weight, scale and bias below.
+            quantizeStreams(model, bits: bits, groupSize: group, evaluate: false)
         }
 
         var weights: [String: MLXArray] = [:]
@@ -235,13 +238,21 @@ public enum WeightLoading {
     /// lm_head, every norm, both vision patchifies, the FM embedders, and the
     /// pixel head — together <3% of bytes (the `keep_hi_precision` doctrine).
     /// ⚠ Quantized forwards must run on the GPU stream (Metal-only kernels).
-    public static func quantizeStreams(_ model: NEOChatModel, bits: Int, groupSize: Int = 64) {
+    ///
+    /// `evaluate: false` only restructures: the QuantizedLinears keep lazy
+    /// graphs over the (lazy, random-init) Linear weights and nothing is
+    /// materialized. That is what `loadArtifact` wants, since every parameter
+    /// is replaced by the artifact's before the one `eval(model)`; evaluating
+    /// here first materialized a full random-init model, 3.5 GB of bf16
+    /// intermediates above the resident set (peak 14.7 GB on the int4 tier
+    /// against 11.2 GB resident, AB-R-0533 / AB-R-0534).
+    public static func quantizeStreams(_ model: NEOChatModel, bits: Int, groupSize: Int = 64, evaluate: Bool = true) {
         quantize(model: model) { path, module in
             guard module is Linear else { return nil }
             guard path.contains("language_model.model.layers.") else { return nil }
             // every layer Linear: q/k/v/o(_mot_gen), mlp(_mot_gen).{gate,up,down}
             return (groupSize: groupSize, bits: bits)
         }
-        eval(model)
+        if evaluate { eval(model) }
     }
 }

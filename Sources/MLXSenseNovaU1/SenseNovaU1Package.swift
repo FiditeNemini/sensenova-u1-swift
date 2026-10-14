@@ -267,6 +267,14 @@ public final class SenseNovaU1Package: ModelPackage {
                 // active set on both, i.e. the vision-token activation lands
                 // inside the declared 4.2 / 4.5 GB and the peak equals the load
                 // peak. bf16 edit is unmeasured; it runs on the same headroom.
+                //
+                // 2026-10-14: the artifact load no longer evaluates the random-init
+                // model (WeightLoading.loadArtifact quantizes structurally), so the
+                // load peak IS the floor: 11.2 GB int4 / 19.0 GB int8. A 1024²
+                // single-reference edit then peaks at 12.2 GB int4 / 19.9 GB int8
+                // (768²: 11.9 / 19.7), i.e. the int4 tier's 1024² fill window sits
+                // under a 12.7 GB MLX limit (16 GB class) with 0.5 GB to spare.
+                // The declared activation stays the 2048² envelope's.
                 footprints: [
                     QuantFootprint(
                         quant: .bf16, residentBytes: 35_500_000_000,

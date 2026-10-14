@@ -1,0 +1,13 @@
+# sensenova-cli, 8 steps, cfg 1.0, seed 42, 8step-v2 tiers, 2026-10-14, M5 Max 128 GB, GPU idle
+sq_fill_int4   1024x1024  loaded 4.7s; resident after load 11235 MB active, peak 14730 MB; 7.2s total (first run), 0.90s/step; peak 14730 MB; RSS 11968512000
+ns_fill_int4   1536x1024  resident after load 11241 MB active, peak 14736 MB; 5.5s total, 0.68s/step; peak 14736 MB; RSS 12001853440; time -l peak footprint 24399407832
+sq_expand_int4 1280x1024  resident after load 11238 MB active, peak 14733 MB; 4.6s total, 0.57s/step; peak 14733 MB; RSS 11980374016; time -l peak footprint 24335739584
+sq_seamless_int4 1024x1024 resident after load 11235 MB active, peak 14730 MB; 3.7s total, 0.46s/step; peak 14730 MB; RSS 11967971328; time -l peak footprint 24113621696
+sq_fill_int8   1024x1024  resident after load 18963 MB active, peak 22458 MB; 4.0s total, 0.50s/step; peak 22458 MB; RSS 20068106240; time -l peak footprint 31954289032
+
+# tonpng.py (engine paintingProblem thresholds: purple = r-g>40 and b-g>40; marker if > 25% of region)
+sq_fill_int4.npy: purple-in-mask 0.0%  luma in/out 102/163  change inside 47.2  drift outside 10.22 MAE / 22.7 dB
+ns_fill_int4.npy: purple-in-mask 0.0%  luma in/out 108/168  change inside 47.8  drift outside 8.52 MAE / 24.2 dB
+sq_expand_int4.npy: purple-in-mask 0.0%  luma in/out 173/160  change inside 114.6  drift outside 8.39 MAE / 25.2 dB
+sq_seamless_int4.npy: purple-in-mask 0.0%  luma in/out 123/163  change inside 24.0  drift outside 8.10 MAE / 25.5 dB
+sq_fill_int8.npy: purple-in-mask 0.0%  luma in/out 100/163  change inside 50.1  drift outside 11.15 MAE / 22.4 dB

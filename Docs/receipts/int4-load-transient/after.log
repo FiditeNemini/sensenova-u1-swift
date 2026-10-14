@@ -1,0 +1,32 @@
+=== int4 1024² after
+[cli] loaded in 2.4s
+[cli] resident after load: 11235 MB active, peak 11235 MB
+[cli] 8-step 1024x1024: 8.9s total, 1.11s/step
+[cli] peak memory: 12203 MB
+         11959173120  maximum resident set size
+         13938910976  peak memory footprint
+=== int8 1024² after
+[cli] loaded in 3.8s
+[cli] resident after load: 18963 MB active, peak 18963 MB
+[cli] 8-step 1024x1024: 4.3s total, 0.54s/step
+[cli] peak memory: 19856 MB
+         20066779136  maximum resident set size
+         21851552984  peak memory footprint
+=== int4 768² after
+[cli] loaded in 2.2s
+[cli] resident after load: 11230 MB active, peak 11230 MB
+[cli] 8-step 768x768: 2.3s total, 0.28s/step
+[cli] peak memory: 11931 MB
+         11937480704  maximum resident set size
+         13284238984  peak memory footprint
+=== int8 768² after
+[cli] loaded in 0.8s
+[cli] resident after load: 18958 MB active, peak 18958 MB
+[cli] 8-step 768x768: 2.4s total, 0.29s/step
+[cli] peak memory: 19659 MB
+         20040941568  maximum resident set size
+         21386411296  peak memory footprint
+[cli] loaded in 0.6s
+[cli] resident after load: 11235 MB active, peak 11235 MB
+[cli] 8-step 1024x1024: 3.9s total, 0.48s/step
+[cli] peak memory: 12203 MB
