@@ -1,0 +1,8 @@
+# sensenova-cli (c1e77da + --mlx-limit-mb/--ballast-mb), 8step-v2-4bit, 8 steps, cfg 1, seed 7, stopsign fixtures, 2026-10-14, GPU idle
+=== 1024 limit 12116 MiB (12.7 GB decimal): limit 12116 MB cache 12116 MB; loaded 2.1s; resident after load 11235 MB active, peak 11235; step 8/8 0.47s/step active 11573 MB; 3.8s total; peak memory 12145 MB; RSS 11959631872; footprint peak 12986066496
+=== 768 limit 12116: loaded 0.4s; resident 11230, peak 11230; step 8/8 0.29s/step active 11410; 2.3s total; peak 11931 MB; RSS 11934875648; footprint 12932163040
+=== 1024 limit 12116 + ballast 1024: ballast 1024 MB resident (active 1036); loaded 0.4s; resident 12259, peak 12259; step 8/8 0.96s/step active 12556; 7.7s total; peak 12650 MB; RSS 11957616640; footprint 13540664512
+=== 768 limit 12116 + ballast 1024: ballast 1024 (active 1030); resident 12254; step 8/8 0.72s/step active 12434; 5.8s total; peak 12509 MB; RSS 11933663232; footprint 13426795664
+=== 1024 limit 13005 MiB (12.7 GiB): resident 11235; step 8/8 0.47s/step active 11550; 3.8s total; peak 12217 MB; RSS 11961335808; footprint 13878994544
+=== 2048 limit 12116 (past the cap): resident 11235; step 8/8 1.80s/step active 11661; 14.4s total; peak 12193 MB; RSS 12001017856; footprint 13115500120
+=== 2048 unlimited (reference): resident 11235; step 8/8 1.82s/step active 11661; 14.6s total; peak 12569 MB; RSS 11999936512; footprint 15101027976

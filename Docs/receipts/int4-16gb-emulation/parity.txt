@@ -1,0 +1,6 @@
+l12116_1024 vs unlimited: BIT-IDENTICAL
+l12116_768 vs unlimited: BIT-IDENTICAL
+l12116_b1024_1024 vs unlimited: BIT-IDENTICAL
+l12116_b1024_768 vs unlimited: BIT-IDENTICAL
+l13005_1024 vs unlimited: BIT-IDENTICAL
+l12116_2048 vs unlimited: BIT-IDENTICAL

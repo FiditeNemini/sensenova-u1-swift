@@ -200,6 +200,22 @@ if arg("convert") != nil {
 
 let loraURL = arg("lora").map { URL(fileURLWithPath: $0) }
 let quantBits = arg("quant").flatMap(Int.init)
+// --mlx-limit-mb N: MLX's memory limit (MiB), the small-Mac emulation. Not a hard cap: past
+// it MLX waits for pending work before allocating, so it reshapes scheduling and can slow a
+// run, never fail it (BRIDGE-036). The cache limit is set to the same figure so the pool
+// can't inflate past it. --ballast-mb N keeps an N MiB MLX array alive across the run, a
+// stand-in for another resident model (the editor's segmenter).
+if let mb = arg("mlx-limit-mb").flatMap(Int.init) {
+    Memory.memoryLimit = mb << 20
+    Memory.cacheLimit = mb << 20
+    print("[cli] MLX memory limit \(Memory.memoryLimit >> 20) MB, cache limit \(Memory.cacheLimit >> 20) MB")
+}
+var ballast: MLXArray? = nil
+if let mb = arg("ballast-mb").flatMap(Int.init) {
+    ballast = MLXArray.ones([mb << 20 / 4], dtype: .float32)
+    eval(ballast!)
+    print("[cli] ballast \(mb) MB resident (active \(GPU.activeMemory >> 20) MB)")
+}
 var t0 = Date()
 let model: NEOChatModel
 if WeightLoading.isArtifact(weights) {
@@ -284,3 +300,4 @@ print("[cli] peak memory: \(GPU.peakMemory / (1 << 20)) MB")
 
 try MLX.save(array: image.asType(.float32), url: URL(fileURLWithPath: outPath))
 print("[cli] wrote \(outPath)")
+if let ballast { print("[cli] ballast released: \(ballast.size >> 18) MB") }
