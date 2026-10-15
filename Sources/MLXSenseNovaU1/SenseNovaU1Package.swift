@@ -288,9 +288,16 @@ public final class SenseNovaU1Package: ModelPackage {
                 ],
                 requiredBackends: [.metalGPU],
                 os: OSRequirement(minMacOS: SemanticVersion(major: 26, minor: 0, patch: 0)),
-                // Measured on M5 Max only so far; relax after receipts on
-                // smaller chips (the int4 tier should fit Pro-class machines).
-                chipFloor: .max
+                // Pro-class since 2026-10-14: the int4 tier measured on a 24 GB
+                // M5 Pro (16-core GPU) with the Max's memory profile to the MiB
+                // (floor 11,235 MiB; 1024² edit peak 12,203, 2048² 12,569) at
+                // 2.1–2.4× the Max's step time, bit-identical across runs, and
+                // admitted as declared on that machine's 19.07 GB budget
+                // (Docs/receipts/int4-m5pro-24gb). Base chips are unmeasured,
+                // so the floor stays here until a base-chip receipt relaxes it.
+                // DeviceProfile.current() reports .max on every host today, so
+                // this floor only bites once the engine detects real tiers.
+                chipFloor: .pro
             ),
             specialties: [],
             surfaces: [

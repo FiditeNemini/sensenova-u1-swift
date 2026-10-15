@@ -1,0 +1,132 @@
+# sensenova-cli v0.5.2 (be1d8ff) release build on this machine, 8step-v2-4bit, 8 steps, cfg 1, seed 7, stopsign fixtures (bake-off inputs, prompt verbatim)
+# host: Apple M5 Pro, 24 GB, macOS 27.2, Wed Oct 14 19:18:11 PDT 2026
+=== warmup int4 1024 edit
+swap before: total = 1024.00M  used = 147.38M  free = 876.62M  (encrypted)
+exit=0
+[cli] edit prompt tokenized: 1 image(s), 1309 cond, 1035 img-cond ids
+[cli] loading OFFLINE ARTIFACT (quant/LoRA baked in) ...
+[cli] loaded in 2.5s
+[cli] resident after load: 11235 MB active, peak 11235 MB
+[cli] step 5/8  1.91s/step  active 11517 MB
+[cli] step 8/8  1.53s/step  active 11517 MB
+[cli] 8-step 1024x1024: 12.2s total, 1.53s/step
+[cli] peak memory: 12203 MB
+[cli] wrote out/warmup_1024.npy
+       15.36 real         0.65 user         4.56 sys
+          3430318080  maximum resident set size
+         13839787776  peak memory footprint
+swap after:  total = 2048.00M  used = 1435.25M  free = 612.75M  (encrypted)
+=== int4 1024 edit
+swap before: total = 2048.00M  used = 1435.25M  free = 612.75M  (encrypted)
+exit=0
+[cli] edit prompt tokenized: 1 image(s), 1309 cond, 1035 img-cond ids
+[cli] loading OFFLINE ARTIFACT (quant/LoRA baked in) ...
+[cli] loaded in 1.7s
+[cli] resident after load: 11235 MB active, peak 11235 MB
+[cli] step 5/8  1.22s/step  active 11517 MB
+[cli] step 8/8  1.10s/step  active 11517 MB
+[cli] 8-step 1024x1024: 8.8s total, 1.10s/step
+[cli] peak memory: 12203 MB
+[cli] wrote out/edit_1024.npy
+       11.29 real         0.68 user         3.59 sys
+          7214809088  maximum resident set size
+         13876471312  peak memory footprint
+swap after:  total = 2048.00M  used = 1427.25M  free = 620.75M  (encrypted)
+=== int4 768 edit
+swap before: total = 2048.00M  used = 1427.25M  free = 620.75M  (encrypted)
+exit=0
+[cli] edit prompt tokenized: 1 image(s), 861 cond, 587 img-cond ids
+[cli] loading OFFLINE ARTIFACT (quant/LoRA baked in) ...
+[cli] loaded in 1.5s
+[cli] resident after load: 11230 MB active, peak 11230 MB
+[cli] step 5/8  0.69s/step  active 11410 MB
+[cli] step 8/8  0.62s/step  active 11410 MB
+[cli] 8-step 768x768: 5.0s total, 0.62s/step
+[cli] peak memory: 11931 MB
+[cli] wrote out/edit_768.npy
+        7.04 real         0.58 user         3.04 sys
+          7239106560  maximum resident set size
+         13208102416  peak memory footprint
+swap after:  total = 2048.00M  used = 1427.25M  free = 620.75M  (encrypted)
+=== int4 2048 edit
+swap before: total = 2048.00M  used = 1427.25M  free = 620.75M  (encrypted)
+exit=0
+[cli] edit prompt tokenized: 1 image(s), 1309 cond, 1035 img-cond ids
+[cli] loading OFFLINE ARTIFACT (quant/LoRA baked in) ...
+[cli] loaded in 1.6s
+[cli] resident after load: 11235 MB active, peak 11235 MB
+[cli] step 5/8  4.39s/step  active 11661 MB
+[cli] step 8/8  4.33s/step  active 11661 MB
+[cli] 8-step 2048x2048: 34.6s total, 4.33s/step
+[cli] peak memory: 12569 MB
+[cli] wrote out/edit_2048.npy
+       36.96 real         0.79 user         4.43 sys
+          7187349504  maximum resident set size
+         15007688328  peak memory footprint
+swap after:  total = 2048.00M  used = 1691.00M  free = 357.00M  (encrypted)
+=== int4 1024 t2i
+swap before: total = 2048.00M  used = 1691.00M  free = 357.00M  (encrypted)
+exit=0
+[cli] prompt tokenized: 261 cond ids (no CFG)
+[cli] loading OFFLINE ARTIFACT (quant/LoRA baked in) ...
+[cli] loaded in 1.5s
+[cli] resident after load: 11223 MB active, peak 11223 MB
+[cli] step 5/8  1.01s/step  active 11315 MB
+[cli] step 8/8  0.97s/step  active 11315 MB
+[cli] 8-step 1024x1024: 7.8s total, 0.97s/step
+[cli] peak memory: 11926 MB
+[cli] wrote out/t2i_1024.npy
+        9.81 real         0.55 user         2.92 sys
+          7632257024  maximum resident set size
+         13024552176  peak memory footprint
+swap after:  total = 2048.00M  used = 1691.00M  free = 357.00M  (encrypted)
+=== int4 2048 t2i
+swap before: total = 2048.00M  used = 1691.00M  free = 357.00M  (encrypted)
+exit=0
+[cli] prompt tokenized: 261 cond ids (no CFG)
+[cli] loading OFFLINE ARTIFACT (quant/LoRA baked in) ...
+[cli] loaded in 1.5s
+[cli] resident after load: 11223 MB active, peak 11223 MB
+[cli] step 5/8  4.20s/step  active 11459 MB
+[cli] step 8/8  4.16s/step  active 11459 MB
+[cli] 8-step 2048x2048: 33.3s total, 4.16s/step
+[cli] peak memory: 12364 MB
+[cli] wrote out/t2i_2048.npy
+       35.26 real         0.66 user         4.06 sys
+          7267450880  maximum resident set size
+         14180508960  peak memory footprint
+swap after:  total = 2048.00M  used = 1691.00M  free = 357.00M  (encrypted)
+=== int4 1024 edit limit 12116
+swap before: total = 2048.00M  used = 1691.00M  free = 357.00M  (encrypted)
+exit=0
+[cli] edit prompt tokenized: 1 image(s), 1309 cond, 1035 img-cond ids
+[cli] MLX memory limit 12116 MB, cache limit 12116 MB
+[cli] loading OFFLINE ARTIFACT (quant/LoRA baked in) ...
+[cli] loaded in 1.5s
+[cli] resident after load: 11235 MB active, peak 11235 MB
+[cli] step 5/8  1.18s/step  active 11517 MB
+[cli] step 8/8  1.09s/step  active 11517 MB
+[cli] 8-step 1024x1024: 8.7s total, 1.09s/step
+[cli] peak memory: 12145 MB
+[cli] wrote out/edit_1024_limit12116.npy
+       10.84 real         0.65 user         2.99 sys
+          7373635584  maximum resident set size
+         12946482776  peak memory footprint
+swap after:  total = 2048.00M  used = 1691.00M  free = 357.00M  (encrypted)
+=== int4 1024 edit repeat
+swap before: total = 2048.00M  used = 1691.00M  free = 357.00M  (encrypted)
+exit=0
+[cli] edit prompt tokenized: 1 image(s), 1309 cond, 1035 img-cond ids
+[cli] loading OFFLINE ARTIFACT (quant/LoRA baked in) ...
+[cli] loaded in 1.6s
+[cli] resident after load: 11235 MB active, peak 11235 MB
+[cli] step 5/8  1.19s/step  active 11517 MB
+[cli] step 8/8  1.09s/step  active 11517 MB
+[cli] 8-step 1024x1024: 8.7s total, 1.09s/step
+[cli] peak memory: 12203 MB
+[cli] wrote out/edit_1024_b.npy
+       10.90 real         0.66 user         3.11 sys
+          7245037568  maximum resident set size
+         13873964608  peak memory footprint
+swap after:  total = 2048.00M  used = 1691.00M  free = 357.00M  (encrypted)
+=== DONE Wed Oct 14 19:20:28 PDT 2026

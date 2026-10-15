@@ -1,0 +1,5 @@
+1024 edit, warm-up (first run after build) vs measured: BIT-IDENTICAL
+1024 edit, repeat vs measured: BIT-IDENTICAL
+1024 edit, MLX limit 12,116 MiB vs unlimited: BIT-IDENTICAL
+NaN/inf count over every output (npy2png): 0
+Cross-machine parity with the M5 Max: not checkable — AB-R-0536/0537 did not keep outputs.
